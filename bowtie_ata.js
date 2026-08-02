@@ -75,6 +75,12 @@ const cmds = {
 
       const v = new Validator(withDialect(testCase.schema), {
         schemas: schemas.length > 0 ? schemas : undefined,
+        // ata asserts formats and applies defaults by default, which suits the
+        // web frameworks it targets. The suite expects the specification
+        // reading: format is an annotation, and default never affects whether
+        // an instance is valid.
+        assertFormat: false,
+        useDefaults: false,
       });
 
       const results = testCase.tests.map((test) => {
