@@ -48,6 +48,7 @@ const cmds = {
         dialects: [
           "https://json-schema.org/draft/2020-12/schema",
           "http://json-schema.org/draft-07/schema#",
+          "https://json-schema.org/v1",
         ],
         os: os.platform(),
         os_version: os.release(),
