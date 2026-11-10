@@ -2,7 +2,7 @@ const readline = require("readline");
 const os = require("os");
 const process = require("process");
 
-const { Validator } = require("ata-validator");
+const { Validator, toOutput } = require("ata-validator");
 const ata_version = require("ata-validator/package.json").version;
 
 const stdio = readline.createInterface({
@@ -85,6 +85,24 @@ const cmds = {
 
       const results = testCase.tests.map((test) => {
         try {
+          if (args.output === "annotations") {
+            const out = toOutput(v, test.instance);
+            const annotations = (out.annotations || []).map((a) => {
+              const segs = a.keywordLocation.split("/").filter(Boolean);
+              const keyword = segs[segs.length - 1];
+              const item = {
+                keyword: keyword,
+                instanceLocation: a.instanceLocation || "",
+                keywordLocation: a.keywordLocation ? "#" + a.keywordLocation : "#",
+                annotation: a.annotation,
+              };
+              if (a.absoluteKeywordLocation) {
+                item.absoluteKeywordLocation = a.absoluteKeywordLocation;
+              }
+              return item;
+            });
+            return { valid: out.valid, annotations: annotations };
+          }
           return { valid: v.validate(test.instance).valid };
         } catch (error) {
           return {
