@@ -2,7 +2,7 @@ const readline = require("readline");
 const os = require("os");
 const process = require("process");
 
-const { Validator } = require("ata-validator");
+const { Validator, toOutput } = require("ata-validator");
 const ata_version = require("ata-validator/package.json").version;
 
 const stdio = readline.createInterface({
@@ -75,6 +75,7 @@ const cmds = {
 
       const v = new Validator(withDialect(testCase.schema), {
         schemas: schemas.length > 0 ? schemas : undefined,
+        baseURI: `https://example.com/bowtie-sent-schema-${encodeURIComponent(String(args.seq))}`,
         // ata asserts formats and applies defaults by default, which suits the
         // web frameworks it targets. The suite expects the specification
         // reading: format is an annotation, and default never affects whether
@@ -85,6 +86,19 @@ const cmds = {
 
       const results = testCase.tests.map((test) => {
         try {
+          if (args.output === "annotations") {
+            const out = toOutput(v, test.instance);
+            const annotations = (out.valid ? out.annotations || [] : []).map((a) => {
+              const segs = a.keywordLocation.split("/");
+              return {
+                keyword: segs[segs.length - 1].replace(/~1/g, "/").replace(/~0/g, "~"),
+                instanceLocation: a.instanceLocation ?? "",
+                absoluteKeywordLocation: a.absoluteKeywordLocation,
+                annotation: a.annotation,
+              };
+            });
+            return { valid: out.valid, annotations: annotations };
+          }
           return { valid: v.validate(test.instance).valid };
         } catch (error) {
           return {
