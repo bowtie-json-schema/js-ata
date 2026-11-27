@@ -75,6 +75,7 @@ const cmds = {
 
       const v = new Validator(withDialect(testCase.schema), {
         schemas: schemas.length > 0 ? schemas : undefined,
+        baseURI: `https://example.com/bowtie-sent-schema-${encodeURIComponent(String(args.seq))}`,
         // ata asserts formats and applies defaults by default, which suits the
         // web frameworks it targets. The suite expects the specification
         // reading: format is an annotation, and default never affects whether
@@ -87,19 +88,14 @@ const cmds = {
         try {
           if (args.output === "annotations") {
             const out = toOutput(v, test.instance);
-            const annotations = (out.annotations || []).map((a) => {
-              const segs = a.keywordLocation.split("/").filter(Boolean);
-              const keyword = segs[segs.length - 1];
-              const item = {
-                keyword: keyword,
-                instanceLocation: a.instanceLocation || "",
-                keywordLocation: a.keywordLocation ? "#" + a.keywordLocation : "#",
+            const annotations = (out.valid ? out.annotations || [] : []).map((a) => {
+              const segs = a.keywordLocation.split("/");
+              return {
+                keyword: segs[segs.length - 1].replace(/~1/g, "/").replace(/~0/g, "~"),
+                instanceLocation: a.instanceLocation ?? "",
+                absoluteKeywordLocation: a.absoluteKeywordLocation,
                 annotation: a.annotation,
               };
-              if (a.absoluteKeywordLocation) {
-                item.absoluteKeywordLocation = a.absoluteKeywordLocation;
-              }
-              return item;
             });
             return { valid: out.valid, annotations: annotations };
           }
